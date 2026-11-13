@@ -99,6 +99,23 @@
     flex: 1;
   }
 
+  .category-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .category-title {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    padding: 10px 12px 4px;
+    font-weight: 600;
+  }
+  .category-group:first-child .category-title {
+    padding-top: 2px;
+  }
+
   .sidebar-footer {
     padding: 12px 16px;
     border-top: 1px solid var(--border);
@@ -223,21 +240,39 @@
       return;
     }
 
+    // 按分类分组渲染
+    const groups = new Map();
     videos.forEach((v, i) => {
-      const item = document.createElement('div');
-      item.className = 'video-item';
-      item.innerHTML = `<span class="dot"></span><span class="name"></span>`;
-      item.querySelector('.name').textContent = v.name;
-      item.addEventListener('click', () => {
-        document.querySelectorAll('.video-item').forEach((el) => el.classList.remove('active'));
-        item.classList.add('active');
-        play(i);
+      const cat = v.category || '其他';
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat).push({ v, i });
+    });
+
+    groups.forEach((items, cat) => {
+      const groupEl = document.createElement('div');
+      groupEl.className = 'category-group';
+      const titleEl = document.createElement('div');
+      titleEl.className = 'category-title';
+      titleEl.textContent = cat;
+      groupEl.appendChild(titleEl);
+      items.forEach(({ v, i }) => {
+        const item = document.createElement('div');
+        item.className = 'video-item';
+        item.innerHTML = `<span class="dot"></span><span class="name"></span>`;
+        item.querySelector('.name').textContent = v.name;
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.video-item').forEach((el) => el.classList.remove('active'));
+          item.classList.add('active');
+          play(i);
+        });
+        groupEl.appendChild(item);
       });
-      listEl.appendChild(item);
+      listEl.appendChild(groupEl);
     });
 
     // 默认选中第一个
-    listEl.firstChild.classList.add('active');
+    const firstItem = listEl.querySelector('.video-item');
+    if (firstItem) firstItem.classList.add('active');
     play(0);
   }
 
